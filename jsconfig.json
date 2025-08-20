@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "esnext", // 使用 esnext 或 es2020 来支持 ESM
+    "allowJs": true,
+    "checkJs": true,
+    "moduleResolution": "node" // 建议添加，以确保 VS Code 正确解析模块路径
+  },
+  "include": ["./**/*"],
+  "exclude": ["node_modules", "**/node_modules"]
+}

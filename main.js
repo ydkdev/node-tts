@@ -19,7 +19,7 @@ import pino from "pino"
 import pinoHttp from "pino-http"
 
 const app = express()
-const port = 8081 // Node服务监听在3001端口
+const port = 8081
 
 const logger = pino({ level: process.env.LOG_LEVEL || "info" })
 const httpLogger = pinoHttp({ logger })
@@ -106,26 +106,8 @@ app.post("/pronunciationAssessment", async (req, res) => {
         continueRecognize(reco, referenceText, resolve, reject)
       }
 
-      // --- 处理请求流 ---
-      let headerBuffer = Buffer.alloc(0)
-      let isHeaderRemoved = false
-      const WAV_HEADER_SIZE = 44
-
       req.on("data", (chunk) => {
-        // ... (移除 WAV 头的逻辑和 pushStream.write(pcmData) 保持不变)
-        if (!isHeaderRemoved) {
-          headerBuffer = Buffer.concat([headerBuffer, chunk])
-          if (headerBuffer.length >= WAV_HEADER_SIZE) {
-            const pcmData = headerBuffer.subarray(WAV_HEADER_SIZE)
-            if (pcmData.length > 0) {
-              pushStream.write(pcmData.buffer)
-            }
-            isHeaderRemoved = true
-            headerBuffer = null
-          }
-        } else {
-          pushStream.write(chunk)
-        }
+        pushStream.write(chunk)
       })
 
       req.on("end", () => {
@@ -155,13 +137,13 @@ app.post("/pronunciationAssessment", async (req, res) => {
           },
         })
       } else if (result.reason === ResultReason.NoMatch) {
-        res.status(200).json({
+        res.status(500).json({
           code: 500,
           message: "NoMatch",
         })
       } else {
         // 其他原因，例如 Canceled
-        res.status(200).json({
+        res.status(500).json({
           code: 500,
           message: `Recognition failed with reason: ${result.reason}`,
         })
@@ -170,7 +152,7 @@ app.post("/pronunciationAssessment", async (req, res) => {
       if (result?.Words?.length > 1) {
         res.status(200).json({ code: 200, message: "Success", data: result })
       } else {
-        res.status(200).json({
+        res.status(500).json({
           code: 500,
           message: `Recognition failed with reason code: ${result.Error}`,
         })
